@@ -1,6 +1,5 @@
-package com.simulater;
+package com.simulator.gui;
 
-import org.codehaus.plexus.interpolation.PropertiesBasedValueSource;
 import org.jnativehook.GlobalScreen;
 import org.jnativehook.NativeHookException;
 import org.jnativehook.keyboard.NativeKeyEvent;
@@ -12,11 +11,13 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.*;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-public class MouseSimulatorGUI extends JFrame{
+public class MouseSimulatorGUI extends JFrame {
 
     private final JTextField x1TextField;
     private final JTextField x2TextField;
@@ -35,22 +36,7 @@ public class MouseSimulatorGUI extends JFrame{
     private JTextArea consoleTextArea;
     private JList<File> fileList;
     private int numPosition;
-
-    public static void main(String[] args) throws AWTException {
-        Logger logger = Logger.getLogger(GlobalScreen.class.getPackage().getName());
-        logger.setLevel(Level.OFF);
-
-
-        SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                MouseSimulatorGUI mouseSimulatorGUI = new MouseSimulatorGUI();
-                mouseSimulatorGUI.setVisible(true);
-            }
-        });
-
-
-    }
+    private boolean isRunning = false;
 
     public MouseSimulatorGUI() {
 
@@ -59,6 +45,7 @@ public class MouseSimulatorGUI extends JFrame{
         setSize(500, 600);
         setLayout(null);
 
+        // line1
         JLabel x1Label = new JLabel("1. X:");
         x1Label.setBounds(20, 20, 40, 40);
         x1TextField = new JTextField(5);
@@ -73,7 +60,6 @@ public class MouseSimulatorGUI extends JFrame{
         timeLabel1.setBounds(300, 20, 60, 40);
         timeTextField1 = new JTextField(5);
         timeTextField1.setBounds(370, 30, 60, 20);
-
         add(x1Label);
         add(x1TextField);
         add(y1Label);
@@ -82,6 +68,7 @@ public class MouseSimulatorGUI extends JFrame{
         add(timeLabel1);
         add(timeTextField1);
 
+        // line2
         JLabel x2Label = new JLabel("2. X:");
         x2Label.setBounds(20, 60, 40, 40);
         x2TextField = new JTextField(5);
@@ -96,7 +83,6 @@ public class MouseSimulatorGUI extends JFrame{
         timeLabel2.setBounds(300, 60, 60, 40);
         timeTextField2 = new JTextField(5);
         timeTextField2.setBounds(370, 70, 60, 20);
-
         add(x2Label);
         add(x2TextField);
         add(y2Label);
@@ -105,6 +91,7 @@ public class MouseSimulatorGUI extends JFrame{
         add(timeLabel2);
         add(timeTextField2);
 
+        // line3
         JLabel x3Label = new JLabel("3. X:");
         x3Label.setBounds(20, 100, 40, 40);
         x3TextField = new JTextField(5);
@@ -119,7 +106,6 @@ public class MouseSimulatorGUI extends JFrame{
         timeLabel3.setBounds(300, 100, 60, 40);
         timeTextField3 = new JTextField(5);
         timeTextField3.setBounds(370, 110, 60, 20);
-
         add(x3Label);
         add(x3TextField);
         add(y3Label);
@@ -128,6 +114,7 @@ public class MouseSimulatorGUI extends JFrame{
         add(timeLabel3);
         add(timeTextField3);
 
+        // line4
         JLabel x4Label = new JLabel("4. X:");
         x4Label.setBounds(20, 140, 40, 40);
         x4TextField = new JTextField(5);
@@ -142,7 +129,6 @@ public class MouseSimulatorGUI extends JFrame{
         timeLabel4.setBounds(300, 140, 60, 40);
         timeTextField4 = new JTextField(5);
         timeTextField4.setBounds(370, 150, 60, 20);
-
         add(x4Label);
         add(x4TextField);
         add(y4Label);
@@ -151,29 +137,33 @@ public class MouseSimulatorGUI extends JFrame{
         add(timeLabel4);
         add(timeTextField4);
 
+        // cycle times
         JLabel cyclesLabel = new JLabel("Cycles: ");
         cyclesLabel.setBounds(20, 180, 60, 40);
         cyclesField = new JTextField(5);
         cyclesField.setBounds(70, 190, 60, 20);
-
         add(cyclesLabel);
         add(cyclesField);
 
+        // list for file
         DefaultListModel<File> listModel = new DefaultListModel<>();
         fileList = new JList<>(listModel);
         fileList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         fileList.setVisibleRowCount(5);
-
-        // 加載檔案列表
         loadFileList();
-        JScrollPane scrollPane = new JScrollPane(fileList);
+        JScrollPane scrollPane = new JScrollPane(fileList); // set file into scrollPane
         scrollPane.setBounds(20, 220, 200, 150);
         add(scrollPane);
 
+        // new file name
         JLabel fileName = new JLabel("Filename: ");
         fileName.setBounds(230, 220, 60, 40);
         fileNameField = new JTextField(5);
         fileNameField.setBounds(290, 230, 90, 20);
+        add(fileName);
+        add(fileNameField);
+
+        // function buttons
         JButton saveButton = new JButton("Save");
         saveButton.setBounds(390, 230, 70, 20);
         JButton loadButton = new JButton("Load");
@@ -182,23 +172,21 @@ public class MouseSimulatorGUI extends JFrame{
         startButton.setBounds(230, 300, 220, 30);
         JButton stopButton = new JButton("Stop!");
         stopButton.setBounds(230, 340, 220, 30);
-
-        add(fileName);
-        add(fileNameField);
         add(saveButton);
         add(loadButton);
         add(startButton);
         add(stopButton);
 
-        // 创建JTextArea用于显示控制台信息
+        // set console msg to textArea
         consoleTextArea = new JTextArea(20, 50);
         PrintStream printStream = new PrintStream(new ConsoleOutputStream(consoleTextArea));
         System.setOut(printStream);
-        // 将JTextArea放置在JScrollPane中，以支持滚动
+        // set textArea into scrollpane
         JScrollPane console = new JScrollPane(consoleTextArea);
         console.setBounds(20, 380, 440, 140);
         add(console);
 
+        // action listeners
         ActionListener xyButtonListener = new ActionListener() {
             private MouseInputListener mouseInputListener;
             private KeyInputListener keyInputListener;
@@ -207,7 +195,8 @@ public class MouseSimulatorGUI extends JFrame{
             public void actionPerformed(ActionEvent e) {
                 try {
                     JButton source = (JButton) e.getSource();
-                    switch(source.getText()){
+                    // to know which line position of the button
+                    switch (source.getText()) {
                         case "GetXY1":
                             numPosition = 1;
                             break;
@@ -234,17 +223,21 @@ public class MouseSimulatorGUI extends JFrame{
                 }
             }
         };
+
         xyButton1.addActionListener(xyButtonListener);
         xyButton2.addActionListener(xyButtonListener);
         xyButton3.addActionListener(xyButtonListener);
         xyButton4.addActionListener(xyButtonListener);
 
+        // save settings
         saveButton.addActionListener(e -> {
             savePreferences();
+
             loadFileList();
         });
+
+        // load settings
         loadButton.addActionListener(e -> {
-            // 获取当前选中的文件
             File selectedFile = fileList.getSelectedValue();
             try {
                 FileInputStream fis = new FileInputStream(selectedFile);
@@ -269,40 +262,58 @@ public class MouseSimulatorGUI extends JFrame{
                 throw new RuntimeException(ex);
             }
         });
-        startButton.addActionListener(e -> {
-            for (int i = 0; i < Integer.parseInt(cyclesField.getText()); i++){
-                System.out.println("Round: " + (i + 1));
-                int k = 1;
-                for (int j = 0; j < 4; j++){
-                    try {
-                        switch (k){
-                            case 1:
-                                greenElement(Integer.parseInt(x1TextField.getText()), Integer.parseInt(y1TextField.getText()), Double.parseDouble(timeTextField1.getText()));
-                                break;
-                            case 2:
-                                greenElement(Integer.parseInt(x2TextField.getText()), Integer.parseInt(y2TextField.getText()), Double.parseDouble(timeTextField2.getText()));
-                                break;
-                            case 3:
-                                greenElement(Integer.parseInt(x3TextField.getText()), Integer.parseInt(y3TextField.getText()), Double.parseDouble(timeTextField3.getText()));
-                                break;
-                            case 4:
-                                greenElement(Integer.parseInt(x4TextField.getText()), Integer.parseInt(y4TextField.getText()), Double.parseDouble(timeTextField4.getText()));
-                                break;
-                        }
-                        k++;
 
-                    } catch (AWTException ex) {
-                        throw new RuntimeException(ex);
+        startButton.addActionListener(e -> {
+            isRunning = true;
+            int cycles = Integer.parseInt(cyclesField.getText());
+
+            SwingWorker<Void, String> worker = new SwingWorker<>() {
+                @Override
+                protected Void doInBackground() {
+                    System.out.println("Start Time: " + new SimpleDateFormat("yyyy/MM/dd HH:mm:ss").format(new Date()));
+                    for (int i = 0; i < cycles && isRunning; i++) {
+                        System.out.println("Round: " + (i + 1));
+                        int k = 1;
+                        for (int j = 0; j < 4 && isRunning; j++) {
+                            try {
+                                switch (k) {
+                                    case 1:
+                                        startRobot(Integer.parseInt(x1TextField.getText()), Integer.parseInt(y1TextField.getText()), 1.5);
+                                        startRobot(Integer.parseInt(x1TextField.getText()), Integer.parseInt(y1TextField.getText()), Double.parseDouble(timeTextField1.getText()));
+                                        break;
+                                    case 2:
+                                        startRobot(Integer.parseInt(x2TextField.getText()), Integer.parseInt(y2TextField.getText()), Double.parseDouble(timeTextField2.getText()));
+                                        break;
+                                    case 3:
+                                        startRobot(Integer.parseInt(x3TextField.getText()), Integer.parseInt(y3TextField.getText()), Double.parseDouble(timeTextField3.getText()));
+                                        break;
+                                    case 4:
+                                        long startTime = System.currentTimeMillis();
+                                        startRobot(Integer.parseInt(x4TextField.getText()), Integer.parseInt(y4TextField.getText()), Double.parseDouble(timeTextField4.getText()));
+                                        System.out.println("TimeCost: " + ((System.currentTimeMillis() - startTime)/1000.0) + " sec");
+                                        break;
+                                }
+                                k++;
+                            } catch (AWTException ex) {
+                                throw new RuntimeException(ex);
+                            }
+                        }
                     }
+                    return null;
                 }
-            }
+            };
+            worker.execute();
         });
 
+        stopButton.addActionListener(e -> {
+            isRunning = false;
+            System.out.println("Stop at: " + new SimpleDateFormat("yyyy/MM/dd HH:mm:ss").format(new Date()));
+        });
 
     }
 
     private void loadFileList() {
-        File folder = new File("preferences/"); // Replace with the actual folder path
+        File folder = new File("preferences/");
         File[] files = folder.listFiles();
         if (files != null) {
             DefaultListModel<File> listModel = (DefaultListModel<File>) fileList.getModel();
@@ -343,9 +354,9 @@ public class MouseSimulatorGUI extends JFrame{
         Robot robot = new Robot();
         robot.delay(2000);
 
-        for (int i = 0; i < 33; i++){
+        for (int i = 0; i < 33; i++) {
             System.out.println("Round: " + (i + 1));
-            if (i%2 == 0){
+            if (i % 2 == 0) {
 
                 robot.mouseMove(967, 89); // 書籤
                 robot.mousePress(InputEvent.BUTTON1_DOWN_MASK);
@@ -372,7 +383,7 @@ public class MouseSimulatorGUI extends JFrame{
                 robot.mousePress(InputEvent.BUTTON1_DOWN_MASK);
                 robot.mouseRelease(InputEvent.BUTTON1_DOWN_MASK);
                 robot.delay(35000);
-            }else {
+            } else {
                 robot.mouseMove(934, 93); // 書籤
                 robot.mousePress(InputEvent.BUTTON1_DOWN_MASK);
                 robot.mouseRelease(InputEvent.BUTTON1_DOWN_MASK);
@@ -402,11 +413,10 @@ public class MouseSimulatorGUI extends JFrame{
         }
     }
 
-    public static void greenElement(int x, int y, double sec) throws AWTException {
-        // 创建一个Robot对象
+    public static void startRobot(int x, int y, double sec) throws AWTException {
         Robot robot = new Robot();
         robot.delay(2000);
-        robot.mouseMove(x, y); // 書籤
+        robot.mouseMove(x, y);
         robot.mousePress(InputEvent.BUTTON1_DOWN_MASK);
         robot.mouseRelease(InputEvent.BUTTON1_DOWN_MASK);
         robot.delay((int) (sec * 1000));
@@ -416,7 +426,7 @@ public class MouseSimulatorGUI extends JFrame{
     private class MouseInputListener implements NativeMouseInputListener {
         @Override
         public void nativeMouseMoved(NativeMouseEvent nativeMouseEvent) {
-            switch (numPosition){
+            switch (numPosition) {
                 case 1:
                     x1TextField.setText(String.valueOf(nativeMouseEvent.getX()));
                     y1TextField.setText(String.valueOf(nativeMouseEvent.getY()));
@@ -436,18 +446,22 @@ public class MouseSimulatorGUI extends JFrame{
             }
 
         }
+
         @Override
         public void nativeMouseClicked(NativeMouseEvent nativeMouseEvent) {
 
         }
+
         @Override
         public void nativeMousePressed(NativeMouseEvent nativeMouseEvent) {
 
         }
+
         @Override
         public void nativeMouseReleased(NativeMouseEvent nativeMouseEvent) {
 
         }
+
         @Override
         public void nativeMouseDragged(NativeMouseEvent nativeMouseEvent) {
 
@@ -458,7 +472,7 @@ public class MouseSimulatorGUI extends JFrame{
 
         @Override
         public void nativeKeyTyped(NativeKeyEvent nativeKeyEvent) {
-            if (nativeKeyEvent.getKeyCode() == 59){
+            if (nativeKeyEvent.getKeyCode() == 59) {
                 try {
                     GlobalScreen.unregisterNativeHook();
                 } catch (NativeHookException e) {
@@ -466,9 +480,10 @@ public class MouseSimulatorGUI extends JFrame{
                 }
             }
         }
+
         @Override
         public void nativeKeyPressed(NativeKeyEvent nativeKeyEvent) {
-            if (nativeKeyEvent.getKeyCode() == 59){
+            if (nativeKeyEvent.getKeyCode() == 59) {
                 try {
                     GlobalScreen.unregisterNativeHook();
                 } catch (NativeHookException e) {
@@ -476,9 +491,10 @@ public class MouseSimulatorGUI extends JFrame{
                 }
             }
         }
+
         @Override
         public void nativeKeyReleased(NativeKeyEvent nativeKeyEvent) {
-            if (nativeKeyEvent.getKeyCode() == 59){
+            if (nativeKeyEvent.getKeyCode() == 59) {
                 try {
                     GlobalScreen.unregisterNativeHook();
                 } catch (NativeHookException e) {
