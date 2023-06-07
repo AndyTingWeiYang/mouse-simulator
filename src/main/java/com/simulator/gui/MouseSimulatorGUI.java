@@ -1,5 +1,6 @@
 package com.simulator.gui;
 
+import com.simulator.utils.RobotUtil;
 import org.jnativehook.GlobalScreen;
 import org.jnativehook.NativeHookException;
 import org.jnativehook.keyboard.NativeKeyEvent;
@@ -187,57 +188,64 @@ public class MouseSimulatorGUI extends JFrame {
         add(console);
 
         // action listeners
-        ActionListener xyButtonListener = new ActionListener() {
-            private MouseInputListener mouseInputListener;
-            private KeyInputListener keyInputListener;
+        xyButton1.addActionListener(getXYButtonListener());
+        xyButton2.addActionListener(getXYButtonListener());
+        xyButton3.addActionListener(getXYButtonListener());
+        xyButton4.addActionListener(getXYButtonListener());
+        saveButton.addActionListener(getSaveButtonListener());
+        loadButton.addActionListener(getLoadButtonListener());
+        startButton.addActionListener(e -> {
+            isRunning = true;
+            int cycles = Integer.parseInt(cyclesField.getText());
 
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                try {
-                    JButton source = (JButton) e.getSource();
-                    // to know which line position of the button
-                    switch (source.getText()) {
-                        case "GetXY1":
-                            numPosition = 1;
-                            break;
-                        case "GetXY2":
-                            numPosition = 2;
-                            break;
-                        case "GetXY3":
-                            numPosition = 3;
-                            break;
-                        case "GetXY4":
-                            numPosition = 4;
-                            break;
+            SwingWorker<Void, String> worker = new SwingWorker<>() {
+                @Override
+                protected Void doInBackground() throws InterruptedException {
+                    System.out.println("Start Time: " + new SimpleDateFormat("yyyy/MM/dd HH:mm:ss").format(new Date()));
+                    for (int i = 0; i < cycles && isRunning; i++) {
+                        System.out.println("Round: " + (i + 1));
+                        Thread.sleep(1000);
+                        int k = 1;
+                        for (int j = 0; j < 4 && isRunning; j++) {
+                            try {
+                                switch (k) {
+                                    case 1:
+                                        RobotUtil.oneClick(Integer.parseInt(x1TextField.getText()), Integer.parseInt(y1TextField.getText()), 1.5);
+                                        RobotUtil.oneClick(Integer.parseInt(x1TextField.getText()), Integer.parseInt(y1TextField.getText()), Double.parseDouble(timeTextField1.getText()));
+                                        break;
+                                    case 2:
+                                        RobotUtil.oneClick(Integer.parseInt(x2TextField.getText()), Integer.parseInt(y2TextField.getText()), Double.parseDouble(timeTextField2.getText()));
+                                        break;
+                                    case 3:
+                                        RobotUtil.oneClick(Integer.parseInt(x3TextField.getText()), Integer.parseInt(y3TextField.getText()), Double.parseDouble(timeTextField3.getText()));
+                                        break;
+                                    case 4:
+                                        long startTime = System.currentTimeMillis();
+                                        RobotUtil.oneClick(Integer.parseInt(x4TextField.getText()), Integer.parseInt(y4TextField.getText()), Double.parseDouble(timeTextField4.getText()));
+                                        System.out.println("TimeCost: " + ((System.currentTimeMillis() - startTime)/1000.0) + " sec");
+                                        break;
+                                }
+                                k++;
+                            } catch (AWTException ex) {
+                                throw new RuntimeException(ex);
+                            }
+                        }
                     }
-
-                    GlobalScreen.registerNativeHook();
-                    mouseInputListener = new MouseInputListener();
-                    keyInputListener = new KeyInputListener();
-                    GlobalScreen.addNativeMouseListener(mouseInputListener);
-                    GlobalScreen.addNativeMouseMotionListener(mouseInputListener);
-                    GlobalScreen.addNativeKeyListener(keyInputListener);
-
-                } catch (NativeHookException ex) {
-                    Logger.getLogger(MouseSimulatorGUI.class.getName()).log(Level.SEVERE, null, ex);
+                    return null;
                 }
-            }
-        };
-
-        xyButton1.addActionListener(xyButtonListener);
-        xyButton2.addActionListener(xyButtonListener);
-        xyButton3.addActionListener(xyButtonListener);
-        xyButton4.addActionListener(xyButtonListener);
-
-        // save settings
-        saveButton.addActionListener(e -> {
-            savePreferences();
-
-            loadFileList();
+            };
+            worker.execute();
         });
 
-        // load settings
-        loadButton.addActionListener(e -> {
+        stopButton.addActionListener(e -> {
+            isRunning = false;
+            System.out.println("Stop at: " + new SimpleDateFormat("yyyy/MM/dd HH:mm:ss").format(new Date()));
+        });
+
+    }
+
+    private ActionListener getLoadButtonListener() {
+        return e -> {
             File selectedFile = fileList.getSelectedValue();
             try {
                 FileInputStream fis = new FileInputStream(selectedFile);
@@ -261,59 +269,56 @@ public class MouseSimulatorGUI extends JFrame {
             } catch (IOException ex) {
                 throw new RuntimeException(ex);
             }
-        });
-
-        startButton.addActionListener(e -> {
-            isRunning = true;
-            int cycles = Integer.parseInt(cyclesField.getText());
-
-            SwingWorker<Void, String> worker = new SwingWorker<>() {
-                @Override
-                protected Void doInBackground() {
-                    System.out.println("Start Time: " + new SimpleDateFormat("yyyy/MM/dd HH:mm:ss").format(new Date()));
-                    for (int i = 0; i < cycles && isRunning; i++) {
-                        System.out.println("Round: " + (i + 1));
-                        int k = 1;
-                        for (int j = 0; j < 4 && isRunning; j++) {
-                            try {
-                                switch (k) {
-                                    case 1:
-                                        startRobot(Integer.parseInt(x1TextField.getText()), Integer.parseInt(y1TextField.getText()), 1.5);
-                                        startRobot(Integer.parseInt(x1TextField.getText()), Integer.parseInt(y1TextField.getText()), Double.parseDouble(timeTextField1.getText()));
-                                        break;
-                                    case 2:
-                                        startRobot(Integer.parseInt(x2TextField.getText()), Integer.parseInt(y2TextField.getText()), Double.parseDouble(timeTextField2.getText()));
-                                        break;
-                                    case 3:
-                                        startRobot(Integer.parseInt(x3TextField.getText()), Integer.parseInt(y3TextField.getText()), Double.parseDouble(timeTextField3.getText()));
-                                        break;
-                                    case 4:
-                                        long startTime = System.currentTimeMillis();
-                                        startRobot(Integer.parseInt(x4TextField.getText()), Integer.parseInt(y4TextField.getText()), Double.parseDouble(timeTextField4.getText()));
-                                        System.out.println("TimeCost: " + ((System.currentTimeMillis() - startTime)/1000.0) + " sec");
-                                        break;
-                                }
-                                k++;
-                            } catch (AWTException ex) {
-                                throw new RuntimeException(ex);
-                            }
-                        }
-                    }
-                    return null;
-                }
-            };
-            worker.execute();
-        });
-
-        stopButton.addActionListener(e -> {
-            isRunning = false;
-            System.out.println("Stop at: " + new SimpleDateFormat("yyyy/MM/dd HH:mm:ss").format(new Date()));
-        });
-
+        };
     }
 
-    private void loadFileList() {
-        File folder = new File("preferences/");
+    private ActionListener getSaveButtonListener() {
+        return e -> {
+            File file = savePreferences();
+            DefaultListModel<File> fileListModel = (DefaultListModel<File>) fileList.getModel();
+            fileListModel.addElement(file);
+        };
+    }
+
+    private ActionListener getXYButtonListener() {
+        ActionListener xyButtonListener = new ActionListener() {
+            private MouseInputListener mouseInputListener;
+            private KeyInputListener keyInputListener;
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                try {
+                    JButton source = (JButton) e.getSource();
+                    // to know which line position of the button
+                    switch (source.getText()) {
+                        case "GetXY1":
+                            numPosition = 1;
+                            break;
+                        case "GetXY2":
+                            numPosition = 2;
+                            break;
+                        case "GetXY3":
+                            numPosition = 3;
+                            break;
+                        case "GetXY4":
+                            numPosition = 4;
+                            break;
+                    }
+                    GlobalScreen.registerNativeHook();
+                    mouseInputListener = new MouseInputListener();
+                    keyInputListener = new KeyInputListener();
+                    GlobalScreen.addNativeMouseListener(mouseInputListener);
+                    GlobalScreen.addNativeMouseMotionListener(mouseInputListener);
+                    GlobalScreen.addNativeKeyListener(keyInputListener);
+                } catch (NativeHookException ex) {
+                    Logger.getLogger(MouseSimulatorGUI.class.getName()).log(Level.SEVERE, null, ex);
+                }
+            }
+        };
+        return xyButtonListener;
+    }
+
+    private DefaultListModel<File> loadFileList() {
+        File folder = new File( new File(System.getProperty("user.dir")).getParent() + "/preferences/");
         File[] files = folder.listFiles();
         if (files != null) {
             DefaultListModel<File> listModel = (DefaultListModel<File>) fileList.getModel();
@@ -322,10 +327,12 @@ public class MouseSimulatorGUI extends JFrame {
                     listModel.addElement(file);
                 }
             }
+            return listModel;
         }
+        return null;
     }
 
-    private void savePreferences() {
+    private File savePreferences() {
         try {
             Properties properties = new Properties();
             properties.setProperty("x1", x1TextField.getText());
@@ -341,127 +348,49 @@ public class MouseSimulatorGUI extends JFrame {
             properties.setProperty("time3", timeTextField3.getText());
             properties.setProperty("time4", timeTextField4.getText());
             properties.setProperty("cycles", cyclesField.getText());
-
-            FileOutputStream fileOut = new FileOutputStream("preferences/" + fileNameField.getText() + ".properties");
+            FileOutputStream fileOut = new FileOutputStream(new File(System.getProperty("user.dir")).getParent() + "/preferences/" + fileNameField.getText() + ".properties");
             properties.store(fileOut, "properties");
             fileOut.close();
+            return new File(new File(System.getProperty("user.dir")).getParent() + "/preferences/" + fileNameField.getText() + ".properties");
         } catch (IOException e) {
         }
+        return null;
     }
-
-    public static void meat() throws AWTException {
-        // 创建一个Robot对象
-        Robot robot = new Robot();
-        robot.delay(2000);
-
-        for (int i = 0; i < 33; i++) {
-            System.out.println("Round: " + (i + 1));
-            if (i % 2 == 0) {
-
-                robot.mouseMove(967, 89); // 書籤
-                robot.mousePress(InputEvent.BUTTON1_DOWN_MASK);
-                robot.mouseRelease(InputEvent.BUTTON1_DOWN_MASK);
-                robot.delay(2500);
-                robot.mousePress(InputEvent.BUTTON1_DOWN_MASK);
-                robot.mouseRelease(InputEvent.BUTTON1_DOWN_MASK);
-
-                robot.delay(1600);
-
-                robot.mouseMove(1230, 492); // 召喚
-                robot.mousePress(InputEvent.BUTTON1_DOWN_MASK);
-                robot.mouseRelease(InputEvent.BUTTON1_DOWN_MASK);
-
-                robot.delay(1600);
-
-                robot.mouseMove(1305, 758); // 確認
-                robot.mousePress(InputEvent.BUTTON1_DOWN_MASK);
-                robot.mouseRelease(InputEvent.BUTTON1_DOWN_MASK);
-
-                robot.delay(2000);
-
-                robot.mouseMove(997, 532); // 自動戰鬥
-                robot.mousePress(InputEvent.BUTTON1_DOWN_MASK);
-                robot.mouseRelease(InputEvent.BUTTON1_DOWN_MASK);
-                robot.delay(35000);
-            } else {
-                robot.mouseMove(934, 93); // 書籤
-                robot.mousePress(InputEvent.BUTTON1_DOWN_MASK);
-                robot.mouseRelease(InputEvent.BUTTON1_DOWN_MASK);
-                robot.delay(2500);
-                robot.mousePress(InputEvent.BUTTON1_DOWN_MASK);
-                robot.mouseRelease(InputEvent.BUTTON1_DOWN_MASK);
-
-                robot.delay(1600);
-
-                robot.mouseMove(1199, 625); // 召喚
-                robot.mousePress(InputEvent.BUTTON1_DOWN_MASK);
-                robot.mouseRelease(InputEvent.BUTTON1_DOWN_MASK);
-
-                robot.delay(1600);
-
-                robot.mouseMove(1248, 757); // 確認
-                robot.mousePress(InputEvent.BUTTON1_DOWN_MASK);
-                robot.mouseRelease(InputEvent.BUTTON1_DOWN_MASK);
-
-                robot.delay(2000);
-
-                robot.mouseMove(1021, 534); // 自動戰鬥
-                robot.mousePress(InputEvent.BUTTON1_DOWN_MASK);
-                robot.mouseRelease(InputEvent.BUTTON1_DOWN_MASK);
-                robot.delay(35000);
-            }
-        }
-    }
-
-    public static void startRobot(int x, int y, double sec) throws AWTException {
-        Robot robot = new Robot();
-        robot.delay(2000);
-        robot.mouseMove(x, y);
-        robot.mousePress(InputEvent.BUTTON1_DOWN_MASK);
-        robot.mouseRelease(InputEvent.BUTTON1_DOWN_MASK);
-        robot.delay((int) (sec * 1000));
-    }
-
 
     private class MouseInputListener implements NativeMouseInputListener {
         @Override
         public void nativeMouseMoved(NativeMouseEvent nativeMouseEvent) {
+            String x = String.valueOf(nativeMouseEvent.getX());
+            String y = String.valueOf(nativeMouseEvent.getY());
             switch (numPosition) {
                 case 1:
-                    x1TextField.setText(String.valueOf(nativeMouseEvent.getX()));
-                    y1TextField.setText(String.valueOf(nativeMouseEvent.getY()));
+                    x1TextField.setText(x);
+                    y1TextField.setText(y);
                     break;
                 case 2:
-                    x2TextField.setText(String.valueOf(nativeMouseEvent.getX()));
-                    y2TextField.setText(String.valueOf(nativeMouseEvent.getY()));
+                    x2TextField.setText(x);
+                    y2TextField.setText(y);
                     break;
                 case 3:
-                    x3TextField.setText(String.valueOf(nativeMouseEvent.getX()));
-                    y3TextField.setText(String.valueOf(nativeMouseEvent.getY()));
+                    x3TextField.setText(x);
+                    y3TextField.setText(y);
                     break;
                 case 4:
-                    x4TextField.setText(String.valueOf(nativeMouseEvent.getX()));
-                    y4TextField.setText(String.valueOf(nativeMouseEvent.getY()));
+                    x4TextField.setText(x);
+                    y4TextField.setText(y);
                     break;
             }
-
         }
-
         @Override
-        public void nativeMouseClicked(NativeMouseEvent nativeMouseEvent) {
-
-        }
-
+        public void nativeMouseClicked(NativeMouseEvent nativeMouseEvent) {}
         @Override
         public void nativeMousePressed(NativeMouseEvent nativeMouseEvent) {
 
         }
-
         @Override
         public void nativeMouseReleased(NativeMouseEvent nativeMouseEvent) {
 
         }
-
         @Override
         public void nativeMouseDragged(NativeMouseEvent nativeMouseEvent) {
 
@@ -504,10 +433,8 @@ public class MouseSimulatorGUI extends JFrame {
         }
     }
 
-    // 自定义OutputStream，用于将数据写入JTextArea
     private static class ConsoleOutputStream extends OutputStream {
         private JTextArea consoleTextArea;
-
         public ConsoleOutputStream(JTextArea consoleTextArea) {
             this.consoleTextArea = consoleTextArea;
         }
@@ -518,6 +445,5 @@ public class MouseSimulatorGUI extends JFrame {
             consoleTextArea.setCaretPosition(consoleTextArea.getDocument().getLength());
         }
     }
-
 
 }
