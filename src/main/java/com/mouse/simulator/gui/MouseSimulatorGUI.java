@@ -1,6 +1,6 @@
-package com.simulator.gui;
+package com.mouse.simulator.gui;
 
-import com.simulator.utils.RobotUtil;
+import com.mouse.simulator.utils.RobotUtil;
 import org.jnativehook.GlobalScreen;
 import org.jnativehook.NativeHookException;
 import org.jnativehook.keyboard.NativeKeyEvent;

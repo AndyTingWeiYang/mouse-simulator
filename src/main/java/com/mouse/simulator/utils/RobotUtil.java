@@ -1,4 +1,4 @@
-package com.simulator.utils;
+package com.mouse.simulator.utils;
 
 import java.awt.*;
 import java.awt.event.InputEvent;

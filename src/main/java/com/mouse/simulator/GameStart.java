@@ -1,6 +1,6 @@
-package com.simulator;
+package com.mouse.simulator;
 
-import com.simulator.gui.MouseSimulatorGUI;
+import com.mouse.simulator.gui.MouseSimulatorGUI;
 import org.jnativehook.GlobalScreen;
 
 import javax.swing.*;
