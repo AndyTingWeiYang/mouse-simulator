@@ -318,7 +318,7 @@ public class MouseSimulatorGUI extends JFrame {
     }
 
     private DefaultListModel<File> loadFileList() {
-        File folder = new File( new File(System.getProperty("user.dir")).getParent() + "/preferences/");
+        File folder = new File( new File(System.getProperty("user.dir")) + "/preferences/");
         File[] files = folder.listFiles();
         if (files != null) {
             DefaultListModel<File> listModel = (DefaultListModel<File>) fileList.getModel();
@@ -348,10 +348,10 @@ public class MouseSimulatorGUI extends JFrame {
             properties.setProperty("time3", timeTextField3.getText());
             properties.setProperty("time4", timeTextField4.getText());
             properties.setProperty("cycles", cyclesField.getText());
-            FileOutputStream fileOut = new FileOutputStream(new File(System.getProperty("user.dir")).getParent() + "/preferences/" + fileNameField.getText() + ".properties");
+            FileOutputStream fileOut = new FileOutputStream(new File(System.getProperty("user.dir")) + "/preferences/" + fileNameField.getText() + ".properties");
             properties.store(fileOut, "properties");
             fileOut.close();
-            return new File(new File(System.getProperty("user.dir")).getParent() + "/preferences/" + fileNameField.getText() + ".properties");
+            return new File(new File(System.getProperty("user.dir")) + "/preferences/" + fileNameField.getText() + ".properties");
         } catch (IOException e) {
         }
         return null;
