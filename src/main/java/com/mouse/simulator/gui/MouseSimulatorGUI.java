@@ -1,6 +1,8 @@
 package com.mouse.simulator.gui;
 
 import com.mouse.simulator.utils.RobotUtil;
+import lombok.Value;
+import org.apache.maven.model.Resource;
 import org.jnativehook.GlobalScreen;
 import org.jnativehook.NativeHookException;
 import org.jnativehook.keyboard.NativeKeyEvent;
@@ -12,6 +14,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.*;
+import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Properties;
@@ -45,6 +48,11 @@ public class MouseSimulatorGUI extends JFrame {
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(500, 600);
         setLayout(null);
+
+        // icon
+        URL iconURL = getClass().getResource("/icon/windowIcon.png");
+        ImageIcon icon = new ImageIcon(iconURL);
+        setIconImage(icon.getImage());
 
         // line1
         JLabel x1Label = new JLabel("1. X:");
